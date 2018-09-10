@@ -2,6 +2,8 @@ from base64 import b32decode, b16encode
 import random
 import re
 
+from wakeonlan import send_magic_packet
+
 from couchpotato.api import addApiView
 from couchpotato.core.event import addEvent
 from couchpotato.core.helpers.variable import mergeDicts
@@ -64,12 +66,21 @@ class DownloaderBase(Provider):
 
         return []
 
+    def _wake(self):
+        mac_address = self.conf('mac_address')
+        log.debug('Waking machine before download with mac address "{}"'.format(mac_address))
+        send_magic_packet(mac_address)
+
     def _download(self, data = None, media = None, manual = False, filedata = None):
         if not media: media = {}
         if not data: data = {}
 
         if self.isDisabled(manual, data):
             return
+
+        if self.conf('wake_enabled', default = False):
+            self._wake()
+
         return self.download(data = data, media = media, filedata = filedata)
 
     def download(self, *args, **kwargs):
@@ -182,6 +193,10 @@ class DownloaderBase(Provider):
         return {'success': t}
 
     def test(self):
+        
+        if self.conf('wake_enabled', default = False):
+            self._wake()
+
         return False
 
     def _pause(self, release_download, pause = True):
