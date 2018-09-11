@@ -74,7 +74,7 @@ class DownloaderBase(Provider):
         if wake_enabled and wait_enabled:
 
             service_ip      = self.conf('ip_address', section = 'download_basics')
-            service_port    = self.conf('port', section = 'download_basics')
+            service_port    = int(self.conf('port', default = 8080, section = 'download_basics'))
             service_timeout = self.conf('timeout', default = 1, section = 'download_basics')
 
             if not timeout:
