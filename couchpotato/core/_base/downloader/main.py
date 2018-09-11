@@ -68,13 +68,13 @@ class DownloaderBase(Provider):
 
     def _downloader_is_awake(self):
         
-        if self.conf('wake_enabled', default = False):
+        if self.conf('wake_enabled', default = False, section = 'download_basics'):
             self._wake()
         else:
             log.debug('WakeOnDownload not enabled. Skipping.')
 
     def _wake(self):
-        mac_address = self.conf('mac_address')
+        mac_address = self.conf('mac_address', section = 'download_basics')
         log.debug('Waking machine before download with mac address "{}"'.format(mac_address))
         send_magic_packet(mac_address)
 
