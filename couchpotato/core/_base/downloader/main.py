@@ -70,6 +70,8 @@ class DownloaderBase(Provider):
         
         if self.conf('wake_enabled', default = False):
             self._wake()
+        else:
+            log.debug('WakeOnDownload not enabled. Skipping.')
 
     def _wake(self):
         mac_address = self.conf('mac_address')
