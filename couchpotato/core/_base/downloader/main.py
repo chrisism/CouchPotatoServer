@@ -66,17 +66,36 @@ class DownloaderBase(Provider):
 
         return []
 
-    def _downloader_is_awake(self):
-        
-        if self.conf('wake_enabled', default = False, section = 'download_basics'):
-            self._wake()
-        else:
-            log.debug('WakeOnDownload not enabled. Skipping.')
+    def _is_downloader_awake(self, timeout = True):
 
+        wake_enabled = self.conf('wake_enabled', default = False, section = 'download_basics')
+        wait_enabled = self.conf('wait_enabled', default = False, section = 'download_basics')
+
+        if wake_enabled and wait_enabled:
+
+            service_ip      = self.conf('ip_address', section = 'download_basics')
+            service_port    = self.conf('port', section = 'download_basics')
+            service_timeout = self.conf('timeout', default = None, section = 'download_basics')
+
+            if not timeout:
+                service_timeout = None
+
+            log.debug('Checking if service is available @{}:{}.'.format(service_ip, service_port))
+            online = wait_net_service(service_ip, service_port, service_timeout)
+            log.info('Service {}:{} available? {}'.format(service_ip, service_port, online))
+            return online
+        
+        log.debug('Skipping service availability check.')
+        return True
+        
     def _wake(self):
         mac_address = self.conf('mac_address', section = 'download_basics')
         log.debug('Waking machine before download with mac address "{}"'.format(mac_address))
         send_magic_packet(mac_address)
+
+        if not self._is_downloader_awake():
+            log.warning('Wake on download failed.')
+
 
     def _download(self, data = None, media = None, manual = False, filedata = None):
         if not media: media = {}
@@ -85,7 +104,8 @@ class DownloaderBase(Provider):
         if self.isDisabled(manual, data):
             return
 
-        self._downloader_is_awake()
+        if not self._is_downloader_awake(False):
+            self._wake()
         
         return self.download(data = data, media = media, filedata = filedata)
 
@@ -98,8 +118,9 @@ class DownloaderBase(Provider):
 
         ids = [download_id['id'] for download_id in download_ids if download_id['downloader'] == self.getName()]
 
-        if ids:
-            self._downloader_is_awake()
+        if ids:    
+            if not self._is_downloader_awake(False):
+                self._wake()
             return self.getAllDownloadStatus(ids)
         else:
             return
@@ -201,7 +222,9 @@ class DownloaderBase(Provider):
 
     def test(self):
         
-        self._downloader_is_awake()
+        if not self._is_downloader_awake(False):
+            self._wake()
+
         return False
 
     def _pause(self, release_download, pause = True):
@@ -217,6 +240,45 @@ class DownloaderBase(Provider):
     def pause(self, release_download, pause):
         return
 
+    def wait_net_service(server, port, timeout=None):
+        """ Wait for network service to appear 
+            @param timeout: in seconds, if None or 0 wait forever
+            @return: True of False, if timeout is None may return only True or
+                     throw unhandled network exception
+        """
+        import socket
+        import errno
+
+        s = socket.socket()
+        if timeout:
+            from time import time as now
+            # time module is needed to calc timeout shared between two exceptions
+            end = now() + timeout
+
+        while True:
+            try:
+                if timeout:
+                    next_timeout = end - now()
+                    if next_timeout < 0:
+                        return False
+                    else:
+                        s.settimeout(next_timeout)
+            
+                s.connect((server, port))
+        
+            except socket.timeout, err:
+                # this exception occurs only if timeout is set
+                if timeout:
+                    return False
+      
+            except socket.error, err:
+                # catch timeout exception from underlying network library
+                # this one is different from socket.timeout
+                if type(err.args) != tuple or err[0] != errno.ETIMEDOUT:
+                    raise
+            else:
+                s.close()
+                return True
 
 class ReleaseDownloadList(list):
 
@@ -248,4 +310,3 @@ class ReleaseDownloadList(list):
         }
 
         return mergeDicts(defaults, result)
-

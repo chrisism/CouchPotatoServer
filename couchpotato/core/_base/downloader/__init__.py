@@ -24,6 +24,24 @@ config = [{
                 {
                     'name': 'mac_address',
                     'label': 'MAC address',
+                },
+                {
+                    'name': 'wait_enabled',
+                    'default': 0,
+                    'type': 'bool',
+                    'label': 'Wait on service is awake'
+                },
+                {
+                    'name': 'ip_address',
+                    'label': 'IP address',
+                },
+                {
+                    'name': 'port',
+                    'label': 'Port',
+                },
+                {
+                    'name': 'timeout',
+                    'label': 'Timeout',
                 }
             ],
         }
