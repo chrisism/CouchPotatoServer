@@ -75,7 +75,7 @@ class DownloaderBase(Provider):
 
             service_ip      = self.conf('ip_address', section = 'download_basics')
             service_port    = int(self.conf('port', default = 8080, section = 'download_basics'))
-            service_timeout = self.conf('timeout', default = 1, section = 'download_basics')
+            service_timeout = int(self.conf('timeout', default = 1, section = 'download_basics'))
 
             if not timeout:
                 service_timeout = 1
