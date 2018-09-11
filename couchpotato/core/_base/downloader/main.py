@@ -66,6 +66,11 @@ class DownloaderBase(Provider):
 
         return []
 
+    def _downloader_is_awake(self):
+        
+        if self.conf('wake_enabled', default = False):
+            self._wake()
+
     def _wake(self):
         mac_address = self.conf('mac_address')
         log.debug('Waking machine before download with mac address "{}"'.format(mac_address))
@@ -78,9 +83,8 @@ class DownloaderBase(Provider):
         if self.isDisabled(manual, data):
             return
 
-        if self.conf('wake_enabled', default = False):
-            self._wake()
-
+        self._downloader_is_awake()
+        
         return self.download(data = data, media = media, filedata = filedata)
 
     def download(self, *args, **kwargs):
@@ -93,6 +97,7 @@ class DownloaderBase(Provider):
         ids = [download_id['id'] for download_id in download_ids if download_id['downloader'] == self.getName()]
 
         if ids:
+            self._downloader_is_awake()
             return self.getAllDownloadStatus(ids)
         else:
             return
@@ -194,9 +199,7 @@ class DownloaderBase(Provider):
 
     def test(self):
         
-        if self.conf('wake_enabled', default = False):
-            self._wake()
-
+        self._downloader_is_awake()
         return False
 
     def _pause(self, release_download, pause = True):
