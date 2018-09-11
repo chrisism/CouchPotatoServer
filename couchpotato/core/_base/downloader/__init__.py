@@ -29,7 +29,7 @@ config = [{
                     'name': 'wait_enabled',
                     'default': 0,
                     'type': 'bool',
-                    'label': 'Wait on service is awake'
+                    'label': 'Wait on service'
                 },
                 {
                     'name': 'ip_address',

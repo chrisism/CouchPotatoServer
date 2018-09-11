@@ -75,13 +75,13 @@ class DownloaderBase(Provider):
 
             service_ip      = self.conf('ip_address', section = 'download_basics')
             service_port    = self.conf('port', section = 'download_basics')
-            service_timeout = self.conf('timeout', default = None, section = 'download_basics')
+            service_timeout = self.conf('timeout', default = 1, section = 'download_basics')
 
             if not timeout:
-                service_timeout = None
+                service_timeout = 1
 
             log.debug('Checking if service is available @{}:{}.'.format(service_ip, service_port))
-            online = wait_net_service(service_ip, service_port, service_timeout)
+            online = self.wait_net_service(service_ip, service_port, service_timeout)
             log.info('Service {}:{} available? {}'.format(service_ip, service_port, online))
             return online
         
@@ -104,7 +104,7 @@ class DownloaderBase(Provider):
         if self.isDisabled(manual, data):
             return
 
-        if not self._is_downloader_awake(False):
+        if not self._is_downloader_awake(timeout = False):
             self._wake()
         
         return self.download(data = data, media = media, filedata = filedata)
@@ -121,6 +121,7 @@ class DownloaderBase(Provider):
         if ids:    
             if not self._is_downloader_awake(False):
                 self._wake()
+
             return self.getAllDownloadStatus(ids)
         else:
             return
@@ -240,7 +241,7 @@ class DownloaderBase(Provider):
     def pause(self, release_download, pause):
         return
 
-    def wait_net_service(server, port, timeout=None):
+    def wait_net_service(self, server, port, timeout=None):
         """ Wait for network service to appear 
             @param timeout: in seconds, if None or 0 wait forever
             @return: True of False, if timeout is None may return only True or
@@ -275,6 +276,7 @@ class DownloaderBase(Provider):
                 # catch timeout exception from underlying network library
                 # this one is different from socket.timeout
                 if type(err.args) != tuple or err[0] != errno.ETIMEDOUT:
+                    log.error(err)
                     raise
             else:
                 s.close()
