@@ -118,9 +118,15 @@ class DownloaderBase(Provider):
 
         ids = [download_id['id'] for download_id in download_ids if download_id['downloader'] == self.getName()]
 
-        if ids:    
+        if ids:
+            
+            wake_enabled_for_check = self.conf('wake_for_download_status', default = False, section = 'download_basics')
+
             if not self._is_downloader_awake(False):
-                self._wake()
+                if wake_enabled_for_check:
+                    self._wake()
+                else:
+                    return
 
             return self.getAllDownloadStatus(ids)
         else:

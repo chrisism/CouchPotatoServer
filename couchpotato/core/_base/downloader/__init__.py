@@ -26,6 +26,12 @@ config = [{
                     'label': 'MAC address',
                 },
                 {
+                    'name': 'wake_for_download_status',
+                    'default': 0,
+                    'type': 'bool',
+                    'label': 'Wake to check DL status?'
+                },
+                {
                     'name': 'wait_enabled',
                     'default': 0,
                     'type': 'bool',
