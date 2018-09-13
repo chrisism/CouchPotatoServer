@@ -70,8 +70,8 @@ class DownloaderBase(Provider):
 
         wake_enabled = self.conf('wake_enabled', default = False, section = 'download_basics')
         wait_enabled = self.conf('wait_enabled', default = False, section = 'download_basics')
-
-        if wake_enabled and wait_enabled:
+        
+        if wait_enabled:
 
             service_ip      = self.conf('ip_address', section = 'download_basics')
             service_port    = int(self.conf('port', default = 8080, section = 'download_basics'))
@@ -84,7 +84,10 @@ class DownloaderBase(Provider):
             online = self.wait_net_service(service_ip, service_port, service_timeout)
             log.info('Service {}:{} available? {}'.format(service_ip, service_port, online))
             return online
-        
+
+        elif wake_enabled:
+            return False
+
         log.debug('Skipping service availability check.')
         return True
         
@@ -93,7 +96,8 @@ class DownloaderBase(Provider):
         log.debug('Waking machine before download with mac address "{}"'.format(mac_address))
         send_magic_packet(mac_address)
 
-        if not self._is_downloader_awake():
+        wait_enabled = self.conf('wait_enabled', default = False, section = 'download_basics')
+        if wait_enabled and not self._is_downloader_awake():
             log.warning('Wake on download failed.')
 
 
